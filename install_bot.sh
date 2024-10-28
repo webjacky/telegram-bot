@@ -41,29 +41,54 @@ EOL
 
 # Create bot.py file
 cat <<EOL > bot.py
-import os
 import json
 import asyncio
-from telethon import TelegramClient
+from telethon import TelegramClient, events
 
-# Path to config.json file
-config_path = os.path.expanduser('~/telegram_bot/config.json')
-
-# Load config.json file
-with open(config_path) as config_file:
+# Load configuration
+with open('config.json') as config_file:
     config = json.load(config_file)
 
-# Start the Telethon client
-client = TelegramClient('session_name', config['api_id'], config['api_hash'])
+api_id = config['api_id']
+api_hash = config['api_hash']
+groups = config['groups']
+
+# Create a set to keep track of sent contract addresses
+sent_contracts = set()
+
+# Create Telegram client
+client = TelegramClient('bot', api_id, api_hash)
+
+@client.on(events.NewMessage(chats=groups)
+def handler(event):
+    message = event.message.message
+    if 'Contract' in message:  # Check if the message contains a contract address
+        contract_address = message.split('Contract: ')[-1].strip()
+        
+        # Check if the contract address has already been sent
+        if contract_address in sent_contracts:
+            print(f"Already sent: {contract_address}")
+            return
+        
+        # Log the received contract address with group name
+        group_name = event.chat.title if event.chat.title else event.chat.username
+        print(f"Received in {group_name}: {contract_address}")
+
+        # Send the contract address to the desired channel/group
+        await client.send_message('your_destination_group', f"Contract Address: {contract_address}")
+        
+        # Add the contract address to the sent list
+        sent_contracts.add(contract_address)
+        print(f"Contract {contract_address} sent successfully!")
 
 async def main():
+    print("Bot is running...")
     await client.start()
-    print("Bot started. You can perform your desired actions.")
+    await client.run_until_disconnected()
 
-try:
+if __name__ == "__main__":
     asyncio.run(main())
-except KeyboardInterrupt:
-    print("Bot stopped.")
+
 EOL
 
 # Completion message
