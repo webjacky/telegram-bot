@@ -14,79 +14,60 @@ sleep 2
 
 #!/bin/bash
 
-# Update and install required packages
-echo "Updating and installing required packages..."
-sudo apt update -y && sudo apt upgrade -y
-sudo apt install -y python3 python3-venv screen git
+# Install necessary libraries
+apt-get update
+apt-get install -y python3 python3-venv git
 
-# Create the bot working directory
+# Create the working directory
 mkdir -p ~/telegram_bot
 cd ~/telegram_bot
 
-# Set up the Python virtual environment
-echo "Setting up Python virtual environment..."
+# Create a virtual environment
 python3 -m venv venv
 source venv/bin/activate
 
 # Install required Python libraries
-echo "Installing Python dependencies..."
 pip install telethon
 
-# Create the main Python bot file
-echo "Creating bot.py..."
-cat << 'EOF' > bot.py
+# Create config.json file
+cat <<EOL > config.json
+{
+    "api_id": "YOUR_API_ID",
+    "api_hash": "YOUR_API_HASH",
+    "groups": [],
+    "maestro_bot_id": "@maestro"
+}
+EOL
+
+# Create bot.py file
+cat <<EOL > bot.py
+import os
 import json
 import asyncio
-from telethon import TelegramClient, events
+from telethon import TelegramClient
 
-# Load config file
-with open('config.json') as config_file:
+# Path to config.json file
+config_path = os.path.expanduser('~/telegram_bot/config.json')
+
+# Load config.json file
+with open(config_path) as config_file:
     config = json.load(config_file)
 
-api_id = config['api_id']
-api_hash = config['api_hash']
-maestro_bot_id = config['maestro_bot_id']
-groups = config['groups']
+# Start the Telethon client
+client = TelegramClient('session_name', config['api_id'], config['api_hash'])
 
-client = TelegramClient('bot', api_id, api_hash)
-
-@client.on(events.NewMessage)
-async def handler(event):
-    message = event.raw_text
-    if any(keyword in message for keyword in ['Contract:', 'Address:']):
-        address = message.split()[-1]
-        # Prevent duplicate messages
-        if not hasattr(client, 'processed_addresses'):
-            client.processed_addresses = set()
-        if address not in client.processed_addresses:
-            client.processed_addresses.add(address)
-            print(f"Group: {event.chat.title}, Contract: {address} - Successfully sent.")
-            await client.send_message(maestro_bot_id, f"Contract Address: {address}")
-        else:
-            print(f"Group: {event.chat.title}, Contract: {address} - Duplicate address")
-
-# Start the bot
 async def main():
     await client.start()
-    print("Bot is running...")
-    await client.run_until_disconnected()
+    print("Bot started. You can perform your desired actions.")
 
-if __name__ == '__main__':
+try:
     asyncio.run(main())
-EOF
+except KeyboardInterrupt:
+    print("Bot stopped.")
+EOL
 
-# Create the config file
-echo "Creating config.json..."
-cat << 'EOF' > config.json
-{
-    "api_id": "Your_API_ID",
-    "api_hash": "Your_API_Hash",
-    "maestro_bot_id": "@YourMaestroBot",
-    "groups": [-1001234567890, -1009876543210]
-}
-EOF
-
-# Display installation instructions
-echo -e "\nInstallation complete. Update the 'config.json' file with your API details and group IDs."
+# Completion message
+echo "Installation complete. Update the 'config.json' file with your API details and group IDs."
 echo "To run the bot, use the following commands:"
-echo -e "source ~/telegram_bot/venv/bin/activate\npython3 ~/telegram_bot/bot.py\n"
+echo "source ~/telegram_bot/venv/bin/activate"
+echo "python3 ~/telegram_bot/bot.py"
