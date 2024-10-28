@@ -44,9 +44,11 @@ cat <<EOL > bot.py
 import json
 import re
 from telethon import TelegramClient, events
+import os
 
-# Load configuration from 'config.json'
-with open('config.json', 'r') as config_file:
+# Load configuration from 'config.json' in the same directory as the script
+config_path = os.path.join(os.path.dirname(__file__), 'config.json')
+with open(config_path, 'r') as config_file:
     config = json.load(config_file)
 
 api_id = config['api_id']
@@ -55,7 +57,7 @@ groups = config['groups']
 maestro_bot_id = config['maestro_bot_id']
 
 # File to store sent addresses
-sent_addresses_file = 'sent_addresses.json'
+sent_addresses_file = os.path.join(os.path.dirname(__file__), 'sent_addresses.json')
 
 # Load previously sent addresses, if any
 try:
@@ -95,6 +97,7 @@ async def handler(event):
 client.start()
 print("Bot is running...")
 client.run_until_disconnected()
+
 
 EOL
 
