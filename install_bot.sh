@@ -42,52 +42,59 @@ EOL
 # Create bot.py file
 cat <<EOL > bot.py
 import json
-import asyncio
+import re
 from telethon import TelegramClient, events
 
-# Load configuration
-with open('config.json') as config_file:
+# Load configuration from 'config.json'
+with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
 api_id = config['api_id']
 api_hash = config['api_hash']
 groups = config['groups']
+maestro_bot_id = config['maestro_bot_id']
 
-# Create a set to keep track of sent contract addresses
-sent_contracts = set()
+# File to store sent addresses
+sent_addresses_file = 'sent_addresses.json'
 
-# Create Telegram client
-client = TelegramClient('bot', api_id, api_hash)
+# Load previously sent addresses, if any
+try:
+    with open(sent_addresses_file, 'r') as f:
+        sent_addresses = json.load(f)
+except (FileNotFoundError, json.JSONDecodeError):
+    sent_addresses = []
 
-@client.on(events.NewMessage(chats=groups)
-def handler(event):
+client = TelegramClient('bot_session', api_id, api_hash)
+
+# Solana contract address regex pattern
+solana_contract_regex = r'[1-9A-HJ-NP-Za-km-z]{32,44}'
+
+@client.on(events.NewMessage(chats=groups))
+async def handler(event):
     message = event.message.message
-    if 'Contract' in message:  # Check if the message contains a contract address
-        contract_address = message.split('Contract: ')[-1].strip()
-        
-        # Check if the contract address has already been sent
-        if contract_address in sent_contracts:
-            print(f"Already sent: {contract_address}")
-            return
-        
-        # Log the received contract address with group name
-        group_name = event.chat.title if event.chat.title else event.chat.username
-        print(f"Received in {group_name}: {contract_address}")
+    sender_id = event.chat_id  # ID of the group or channel where the message came from
+    contract_addresses = re.findall(solana_contract_regex, message)  # Find Solana contract addresses
 
-        # Send the contract address to the desired channel/group
-        await client.send_message('your_destination_group', f"Contract Address: {contract_address}")
-        
-        # Add the contract address to the sent list
-        sent_contracts.add(contract_address)
-        print(f"Contract {contract_address} sent successfully!")
+    if contract_addresses:
+        new_addresses = []
+        for address in contract_addresses:
+            if address not in sent_addresses:
+                # New address found, sending to Maestro Bot
+                print(f"New contract address found: {address}, group ID: {sender_id}")
+                await client.send_message(maestro_bot_id, f'New Solana contract address: {address}')
+                print(f"Address successfully sent to {maestro_bot_id}: {address}")
+                sent_addresses.append(address)  # Add the new address to the list
+                new_addresses.append(address)
+            else:
+                print(f"Address already sent: {address}")
+        if new_addresses:
+            with open(sent_addresses_file, 'w') as f:
+                json.dump(sent_addresses, f)
 
-async def main():
-    print("Bot is running...")
-    await client.start()
-    await client.run_until_disconnected()
-
-if __name__ == "__main__":
-    asyncio.run(main())
+# Start the bot
+client.start()
+print("Bot is running...")
+client.run_until_disconnected()
 
 EOL
 
