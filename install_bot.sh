@@ -14,41 +14,31 @@ sleep 2
 
 #!/bin/bash
 
-# Install necessary libraries
-apt-get update
-apt-get install -y python3 python3-venv git
+# Update and install dependencies
+echo "Updating system and installing required dependencies..."
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y python3 python3-pip python3-venv screen nano
 
-# Create the working directory
-mkdir -p ~/telegram_bot
-cd ~/telegram_bot
-
-# Create a virtual environment
+# Set up the bot directory and virtual environment
+echo "Setting up bot directory and virtual environment..."
+mkdir -p ~/telegram-bot
+cd ~/telegram-bot
 python3 -m venv venv
 source venv/bin/activate
 
-# Install required Python libraries
+# Install necessary Python packages
+echo "Installing necessary Python packages..."
 pip install telethon
 
-# Create config.json file
-cat <<EOL > config.json
-{
-    "api_id": "YOUR_API_ID",
-    "api_hash": "YOUR_API_HASH",
-    "groups": [],
-    "maestro_bot_id": "@maestro"
-}
-EOL
-
-# Create bot.py file
-cat <<EOL > bot.py
+# Create the bot's Python script
+echo "Creating bot script..."
+cat << 'EOF' > bot.py
 import json
 import re
 from telethon import TelegramClient, events
-import os
 
-# Load configuration from 'config.json' in the same directory as the script
-config_path = os.path.join(os.path.dirname(__file__), 'config.json')
-with open(config_path, 'r') as config_file:
+# Load configuration
+with open('config.json', 'r') as config_file:
     config = json.load(config_file)
 
 api_id = config['api_id']
@@ -56,8 +46,7 @@ api_hash = config['api_hash']
 groups = config['groups']
 maestro_bot_id = config['maestro_bot_id']
 
-# File to store sent addresses
-sent_addresses_file = os.path.join(os.path.dirname(__file__), 'sent_addresses.json')
+sent_addresses_file = 'sent_addresses.json'
 
 # Load previously sent addresses, if any
 try:
@@ -68,24 +57,24 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 client = TelegramClient('bot_session', api_id, api_hash)
 
-# Solana contract address regex pattern
+# Define Solana contract address pattern
 solana_contract_regex = r'[1-9A-HJ-NP-Za-km-z]{32,44}'
 
+# Handle new messages
 @client.on(events.NewMessage(chats=groups))
 async def handler(event):
     message = event.message.message
-    sender_id = event.chat_id  # ID of the group or channel where the message came from
-    contract_addresses = re.findall(solana_contract_regex, message)  # Find Solana contract addresses
+    sender_id = event.chat_id
+    contract_addresses = re.findall(solana_contract_regex, message)
 
     if contract_addresses:
         new_addresses = []
         for address in contract_addresses:
             if address not in sent_addresses:
-                # New address found, sending to Maestro Bot
                 print(f"New contract address found: {address}, group ID: {sender_id}")
                 await client.send_message(maestro_bot_id, f'New Solana contract address: {address}')
-                print(f"Address successfully sent to {maestro_bot_id}: {address}")
-                sent_addresses.append(address)  # Add the new address to the list
+                print(f"Successfully sent to {maestro_bot_id}: {address}")
+                sent_addresses.append(address)
                 new_addresses.append(address)
             else:
                 print(f"Address already sent: {address}")
@@ -97,12 +86,20 @@ async def handler(event):
 client.start()
 print("Bot is running...")
 client.run_until_disconnected()
+EOF
 
+# Create configuration file template
+echo "Creating configuration file template..."
+cat << 'EOF' > config.json
+{
+    "api_id": "YOUR_API_ID",
+    "api_hash": "YOUR_API_HASH",
+    "groups": [123456789, 987654321],
+    "maestro_bot_id": "@maestro"
+}
+EOF
 
-EOL
+# Notify user to update config.json
+echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
+nano config.json
 
-# Completion message
-echo "Installation complete. Update the 'config.json' file with your API details and group IDs."
-echo "To run the bot, use the following commands:"
-echo "source ~/telegram_bot/venv/bin/activate"
-echo "python3 ~/telegram_bot/bot.py"
