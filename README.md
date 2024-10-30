@@ -8,8 +8,8 @@
 <li>It produces a log for each CA it sends, allowing you to follow it on the screen.</li>
 </ul>
 <p><strong>Things to watch out for;</strong></p>
-<h3>It <strong>works</strong> perfect with <a href="https://t.me/maestro?start=r-jackyz">Maestro Bot</a>, other bots do not work properly.</h3>
-<p>You can also use <a href="https://t.me/hector_trojanbot?start=r-jackyz">Trojan Bot.</a><br /><br /><br /><em><strong>Explanations of the menus in the screenshots;<br /></strong></em></p>
+<h3>It <strong>works</strong> perfect with <a href="https://t.me/maestro?start=r-jackyz" target="_blank">Maestro Bot</a>, other bots do not work properly.</h3>
+<p>You can also use <a href="https://t.me/hector_trojanbot?start=r-jackyz" target="_blank">Trojan Bot.</a><br /><br /><br /><em><strong>Explanations of the menus in the screenshots;<br /></strong></em></p>
 <ul>
 <li><strong>Min MC:</strong> If the token's market cap is lower than your set amount, auto buy will not be triggered.</li>
 <li><strong>Max MC:</strong> If the token's market cap is higher than your set amount, auto buy will not be triggered.</li>
