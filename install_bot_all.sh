@@ -1,3 +1,5 @@
+#!/bin/bash
+
 clear
 echo -e "\e[32m"
 echo "██╗    ██╗███████╗██████╗      ██╗ █████╗  ██████╗██╗  ██╗";
@@ -12,9 +14,7 @@ clear
 echo -e "\e[32mStarting Web Jack Bot Installer...\e[0m"
 sleep 2
 
-#!/bin/bash
-
-# Update and install dependencies
+# System update and installing dependencies
 echo "Updating system and installing required dependencies..."
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3 python3-pip python3-venv screen nano
@@ -57,44 +57,42 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 client = TelegramClient('bot_session', api_id, api_hash)
 
-# Define contract address patterns for multiple networks
-solana_contract_regex = r'[1-9A-HJ-NP-Za-km-z]{32,44}'  # Solana
-ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'  # Ethereum
-avalanche_contract_regex = r'0x[a-fA-F0-9]{40}'  # Avalanche
-bsc_contract_regex = r'0x[a-fA-F0-9]{40}'  # Binance Smart Chain
-arbitrum_contract_regex = r'0x[a-fA-F0-9]{40}'  # Arbitrum
-base_chain_contract_regex = r'0x[a-fA-F0-9]{40}'  # Base Chain
-tron_chain_contract_regex = r'T[a-zA-Z0-9]{33}'  # Tron Chain
+# Define regex patterns for contract addresses across various chains
+regex_patterns = {
+    'solana': r'[1-9A-HJ-NP-Za-km-z]{32,44}',
+    'ethereum': r'0x[a-fA-F0-9]{40}',
+    'bsc': r'0x[a-fA-F0-9]{40}',
+    'avalanche': r'0x[a-fA-F0-9]{40}',
+    'arbitrum': r'0x[a-fA-F0-9]{40}',
+    'base': r'0x[a-fA-F0-9]{40}',
+    'tron': r'T[a-zA-Z0-9]{33}'
+}
 
 # Handle new messages
 @client.on(events.NewMessage(chats=groups))
 async def handler(event):
     message = event.message.message
     sender_id = event.chat_id
-    contract_addresses = (
-        re.findall(solana_contract_regex, message) +
-        re.findall(ethereum_contract_regex, message) +
-        re.findall(avalanche_contract_regex, message) +
-        re.findall(bsc_contract_regex, message) +
-        re.findall(arbitrum_contract_regex, message) +
-        re.findall(base_chain_contract_regex, message) +
-        re.findall(tron_chain_contract_regex, message)
-    )
+    found_addresses = set()  # Use a set to store unique addresses only
 
-    if contract_addresses:
-        new_addresses = []
-        for address in contract_addresses:
+    for chain, pattern in regex_patterns.items():
+        contract_addresses = re.findall(pattern, message)
+        unique_addresses = set(contract_addresses)  # Filter duplicates
+
+        for address in unique_addresses:
             if address not in sent_addresses:
-                print(f"New contract address found: {address}, group ID: {sender_id}")
-                await client.send_message(maestro_bot_id, f'New contract address: {address}')
+                print(f"New {chain} contract address found: {address}, group ID: {sender_id}")
+                await client.send_message(maestro_bot_id, f'New {chain} contract address: {address}')
                 print(f"Successfully sent to {maestro_bot_id}: {address}")
                 sent_addresses.append(address)
-                new_addresses.append(address)
+                found_addresses.add(address)
             else:
                 print(f"Address already sent: {address}")
-        if new_addresses:
-            with open(sent_addresses_file, 'w') as f:
-                json.dump(sent_addresses, f)
+
+    # Save the updated list of sent addresses
+    if found_addresses:
+        with open(sent_addresses_file, 'w') as f:
+            json.dump(sent_addresses, f)
 
 # Start the bot
 client.start()
@@ -113,6 +111,6 @@ cat << 'EOF' > config.json
 }
 EOF
 
-# Notify user to update config.json
+# Notify user to update config.json and open it in nano
 echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
 nano config.json
