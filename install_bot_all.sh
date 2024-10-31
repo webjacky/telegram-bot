@@ -57,30 +57,44 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 client = TelegramClient('bot_session', api_id, api_hash)
 
-# Define Ethereum contract address pattern
-ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'
+# Define blockchain contract address patterns
+contract_patterns = {
+    'solana': r'[1-9A-HJ-NP-Za-km-z]{32,44}',
+    'ethereum': r'0x[a-fA-F0-9]{40}',
+    'avalanche': r'0x[a-fA-F0-9]{40}',
+    'binance_smart_chain': r'0x[a-fA-F0-9]{40}',
+    'arbitrum': r'0x[a-fA-F0-9]{40}',
+    'base_chain': r'0x[a-fA-F0-9]{40}',
+    'tron': r'T[A-Za-z1-9]{33}'
+}
 
 # Handle new messages
 @client.on(events.NewMessage(chats=groups))
 async def handler(event):
     message = event.message.message
     sender_id = event.chat_id
-    contract_addresses = re.findall(ethereum_contract_regex, message)
 
-    if contract_addresses:
-        new_addresses = []
-        for address in contract_addresses:
-            if address not in sent_addresses:
-                print(f"New contract address found: {address}, group ID: {sender_id}")
-                await client.send_message(maestro_bot_id, f'New Ethereum contract address: {address}')
-                print(f"Successfully sent to {maestro_bot_id}: {address}")
-                sent_addresses.append(address)
-                new_addresses.append(address)
-            else:
-                print(f"Address already sent: {address}")
-        if new_addresses:
-            with open(sent_addresses_file, 'w') as f:
-                json.dump(sent_addresses, f)
+    for chain, pattern in contract_patterns.items():
+        contract_addresses = re.findall(pattern, message)
+        if contract_addresses:
+            new_addresses = []
+            for address in contract_addresses:
+                if address not in sent_addresses:
+                    print(f"New {chain} contract address found: {address}, group ID: {sender_id}")
+                    await client.send_message(maestro_bot_id, f'New {chain} contract address: {address}')
+                    print(f"Successfully sent to {maestro_bot_id}: {address}")
+                    sent_addresses.append(address)
+                    new_addresses.append(address)
+                else:
+                    print(f"Address already sent: {address}")
+
+            # Save updated sent addresses list to file only if there are new addresses
+            if new_addresses:
+                try:
+                    with open(sent_addresses_file, 'w') as f:
+                        json.dump(sent_addresses, f)
+                except Exception as e:
+                    print(f"Error saving sent addresses: {e}")
 
 # Start the bot
 client.start()
@@ -99,10 +113,8 @@ cat << 'EOF' > config.json
 }
 EOF
 
-# Final message to user
-echo -e "\e[32mInstallation complete.\e[0m"
-echo "Navigate to ~/telegram_bot and update the 'config.json' file with your API details and group IDs."
-
-# Move to bot directory and wait
-cd ~/telegram_bot
-exec $SHELL
+# Notify user to update config.json
+echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
+echo "Once updated, you can run the bot using the command:"
+echo "screen -dmS telegram_bot python3 bot.py"
+echo "To resume the screen session, use: screen -r telegram_bot"
