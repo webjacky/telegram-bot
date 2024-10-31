@@ -3,28 +3,6 @@
 # Clear the screen
 clear
 
-# Define a function to print the text with a typing effect
-print_with_typing_effect() {
-    text="$1"
-    for (( i=0; i<${#text}; i++ )); do
-        echo -n "${text:i:1}"
-        sleep 0.1
-    done
-    echo
-}
-
-# Define a function to create a delete effect
-delete_effect() {
-    text="$1"
-    for (( i=${#text}; i>0; i-- )); do
-        echo -n "${text:0:i}"
-        sleep 0.1
-        echo -ne "\r"
-        echo -n "          "
-        echo -ne "\r"
-    done
-}
-
 # Define the banner text
 banner_text="██╗    ██╗███████╗██████╗      ██╗ █████╗  ██████╗██╗  ██╗
 ██║    ██║██╔════╝██╔══██╗    ███║██╔══██╗██╔════╝██║ ██╔╝
@@ -33,22 +11,18 @@ banner_text="██╗    ██╗███████╗██████╗
 ╚███╔███╔╝███████╗██████╔╝     ██║██║  ██║╚██████╗██║  ██╗
  ╚══╝╚══╝ ╚══════╝╚═════╝      ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝"
 
-# Print the banner with typing effect
-print_with_typing_effect "$banner_text"
-
-# Wait for a moment
+# Print the banner with a faster animation
+for (( i=0; i<${#banner_text}; i++ )); do
+    echo -n "${banner_text:i:1}"
+    sleep 0.01  # Speed up the animation
+done
+echo # New line after the banner
 sleep 1
 
-# Delete the banner with delete effect
-delete_effect "$banner_text"
-
-# Wait before starting the installation
-sleep 1
-
-# Clear the screen again
+# Clear the screen
 clear
 echo -e "\e[32mStarting Web Jack Bot Installer...\e[0m"
-sleep 2
+sleep 1
 
 # Update and install dependencies
 echo "Updating system and installing required dependencies..."
@@ -70,7 +44,6 @@ pip install telethon
 echo "Creating bot script..."
 cat << 'EOF' > bot.py
 import json
-import re
 from telethon import TelegramClient, events
 
 # Load configuration
@@ -79,48 +52,14 @@ with open('config.json', 'r') as config_file:
 
 api_id = config['api_id']
 api_hash = config['api_hash']
-groups = config['groups']
-maestro_bot_id = config['maestro_bot_id']
+client = TelegramClient('session_name', api_id, api_hash)
 
-sent_addresses_file = 'sent_addresses.json'
-
-# Load previously sent addresses, if any
-try:
-    with open(sent_addresses_file, 'r') as f:
-        sent_addresses = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
-    sent_addresses = []
-
-client = TelegramClient('bot_session', api_id, api_hash)
-
-# Define Ethereum contract address pattern
-ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'
-
-# Handle new messages
-@client.on(events.NewMessage(chats=groups))
+@client.on(events.NewMessage)
 async def handler(event):
-    message = event.message.message
-    sender_id = event.chat_id
-    contract_addresses = re.findall(ethereum_contract_regex, message)
+    # Handle new message event
+    print(event.message)
 
-    if contract_addresses:
-        new_addresses = []
-        for address in contract_addresses:
-            if address not in sent_addresses:
-                print(f"New contract address found: {address}, group ID: {sender_id}")
-                await client.send_message(maestro_bot_id, f'New Ethereum contract address: {address}')
-                print(f"Successfully sent to {maestro_bot_id}: {address}")
-                sent_addresses.append(address)
-                new_addresses.append(address)
-            else:
-                print(f"Address already sent: {address}")
-        if new_addresses:
-            with open(sent_addresses_file, 'w') as f:
-                json.dump(sent_addresses, f)
-
-# Start the bot
 client.start()
-print("Bot is running...")
 client.run_until_disconnected()
 EOF
 
@@ -130,13 +69,17 @@ cat << 'EOF' > config.json
 {
     "api_id": "YOUR_API_ID",
     "api_hash": "YOUR_API_HASH",
-    "groups": [123456789, 987654321],
-    "maestro_bot_id": "@maestro"
+    "groups": []
 }
 EOF
 
-# Notify user to update config.json
-echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
+# Change permissions
+chmod +x bot.py
 
-# Navigate to the bot directory
+# Show completion message
+echo "Installation complete. Please update the 'config.json' file with your API details."
+echo "Now you are in the bot directory. You can run the bot using the command:"
+echo "screen -dmS telegram_bot python3 bot.py"
+
+# Move to bot directory
 cd ~/telegram-bot
