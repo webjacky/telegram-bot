@@ -1,4 +1,4 @@
-<h2><strong>Installation</strong></h2>
+<h2><strong>Server Setup</strong></h2>
 <p>First of all, you need a server, your personal computer may not be suitable for this job since the bot needs to be open all the time.</p>
 <p>The cheapest Linux servers with a price of 3.5&euro; per month will do the job.<br />I usually use Hetzner, to be honest I haven't worked with a better one yet.<br />Fast and affordable servers.</p>
 <p><a href="https://hetzner.cloud/?ref=F2D8pXTRfpVw" target="_blank">Click to Register Hetzner</a></p>
