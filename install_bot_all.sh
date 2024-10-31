@@ -21,8 +21,8 @@ sudo apt install -y python3 python3-pip python3-venv screen nano
 
 # Set up the bot directory and virtual environment
 echo "Setting up bot directory and virtual environment..."
-mkdir -p ~/telegram-bot
-cd ~/telegram-bot || { echo "Failed to navigate to bot directory"; exit 1; }
+mkdir -p ~/telegram_bot
+cd ~/telegram_bot
 python3 -m venv venv
 source venv/bin/activate
 
@@ -57,8 +57,6 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 client = TelegramClient('bot_session', api_id, api_hash)
 
-# Define Solana contract address pattern
-solana_contract_regex = r'[1-9A-HJ-NP-Za-km-z]{32,44}'
 # Define Ethereum contract address pattern
 ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'
 
@@ -67,14 +65,14 @@ ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'
 async def handler(event):
     message = event.message.message
     sender_id = event.chat_id
-    contract_addresses = re.findall(solana_contract_regex, message) + re.findall(ethereum_contract_regex, message)
+    contract_addresses = re.findall(ethereum_contract_regex, message)
 
     if contract_addresses:
         new_addresses = []
         for address in contract_addresses:
             if address not in sent_addresses:
                 print(f"New contract address found: {address}, group ID: {sender_id}")
-                await client.send_message(maestro_bot_id, f'New contract address: {address}')
+                await client.send_message(maestro_bot_id, f'New Ethereum contract address: {address}')
                 print(f"Successfully sent to {maestro_bot_id}: {address}")
                 sent_addresses.append(address)
                 new_addresses.append(address)
@@ -101,15 +99,10 @@ cat << 'EOF' > config.json
 }
 EOF
 
-# Notify user to update config.json
-echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
+# Final message to user
+echo -e "\e[32mInstallation complete.\e[0m"
+echo "Navigate to ~/telegram_bot and update the 'config.json' file with your API details and group IDs."
 
-# Change to the bot directory explicitly
-cd ~/telegram-bot
-if [[ $? -ne 0 ]]; then
-    echo "Failed to navigate to the bot directory."
-    exit 1
-fi
-
-echo "You are now in the bot directory. You can run the bot using the command:"
-echo "screen -dmS telegram_bot python3 bot.py"
+# Move to bot directory and wait
+cd ~/telegram_bot
+exec $SHELL
