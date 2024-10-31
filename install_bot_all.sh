@@ -1,3 +1,5 @@
+#!/bin/bash
+
 clear
 echo -e "\e[32m"
 echo "██╗    ██╗███████╗██████╗      ██╗ █████╗  ██████╗██╗  ██╗";
@@ -12,8 +14,6 @@ clear
 echo -e "\e[32mStarting Web Jack Bot Installer...\e[0m"
 sleep 2
 
-#!/bin/bash
-
 # Update and install dependencies
 echo "Updating system and installing required dependencies..."
 sudo apt update && sudo apt upgrade -y
@@ -22,7 +22,7 @@ sudo apt install -y python3 python3-pip python3-venv screen nano
 # Set up the bot directory and virtual environment
 echo "Setting up bot directory and virtual environment..."
 mkdir -p ~/telegram-bot
-cd ~/telegram-bot
+cd ~/telegram-bot || { echo "Failed to navigate to bot directory"; exit 1; }
 python3 -m venv venv
 source venv/bin/activate
 
