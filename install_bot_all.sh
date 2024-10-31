@@ -105,3 +105,4 @@ EOF
 cd ~/telegram-bot
 echo "Now you are in the bot directory. You can run the bot using the command:"
 echo "screen -dmS telegram_bot python3 bot.py"
+pwd  # Show the current directory
