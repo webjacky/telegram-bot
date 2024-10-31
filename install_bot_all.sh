@@ -101,7 +101,7 @@ cat << 'EOF' > config.json
 }
 EOF
 
-# Notify user to update config.json and show the current directory
+# Notify user to update config.json
 echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
 
 # Change to the bot directory explicitly
@@ -111,5 +111,5 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-echo "Now you are in the bot directory. You can run the bot using the command:"
+echo "You are now in the bot directory. You can run the bot using the command:"
 echo "screen -dmS telegram_bot python3 bot.py"
