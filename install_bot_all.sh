@@ -57,17 +57,29 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 client = TelegramClient('bot_session', api_id, api_hash)
 
-# Define Solana contract address pattern
-solana_contract_regex = r'[1-9A-HJ-NP-Za-km-z]{32,44}'
-# Define Ethereum contract address pattern
-ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'
+# Define contract address patterns for multiple networks
+solana_contract_regex = r'[1-9A-HJ-NP-Za-km-z]{32,44}'  # Solana
+ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'  # Ethereum
+avalanche_contract_regex = r'0x[a-fA-F0-9]{40}'  # Avalanche
+bsc_contract_regex = r'0x[a-fA-F0-9]{40}'  # Binance Smart Chain
+arbitrum_contract_regex = r'0x[a-fA-F0-9]{40}'  # Arbitrum
+base_chain_contract_regex = r'0x[a-fA-F0-9]{40}'  # Base Chain
+tron_chain_contract_regex = r'T[a-zA-Z0-9]{33}'  # Tron Chain
 
 # Handle new messages
 @client.on(events.NewMessage(chats=groups))
 async def handler(event):
     message = event.message.message
     sender_id = event.chat_id
-    contract_addresses = re.findall(solana_contract_regex, message) + re.findall(ethereum_contract_regex, message)
+    contract_addresses = (
+        re.findall(solana_contract_regex, message) +
+        re.findall(ethereum_contract_regex, message) +
+        re.findall(avalanche_contract_regex, message) +
+        re.findall(bsc_contract_regex, message) +
+        re.findall(arbitrum_contract_regex, message) +
+        re.findall(base_chain_contract_regex, message) +
+        re.findall(tron_chain_contract_regex, message)
+    )
 
     if contract_addresses:
         new_addresses = []
@@ -101,8 +113,6 @@ cat << 'EOF' > config.json
 }
 EOF
 
-# Change directory to the bot folder
-cd ~/telegram-bot
-
 # Notify user to update config.json
 echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
+nano config.json
