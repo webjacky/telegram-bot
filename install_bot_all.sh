@@ -103,6 +103,13 @@ EOF
 
 # Notify user to update config.json and show the current directory
 echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
-cd ~/telegram-bot  # Ensure the user is in the bot directory
+
+# Change to the bot directory explicitly
+cd ~/telegram-bot
+if [[ $? -ne 0 ]]; then
+    echo "Failed to navigate to the bot directory."
+    exit 1
+fi
+
 echo "Now you are in the bot directory. You can run the bot using the command:"
 echo "screen -dmS telegram_bot python3 bot.py"
