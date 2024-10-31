@@ -1,15 +1,51 @@
 #!/bin/bash
 
+# Clear the screen
 clear
-echo -e "\e[32m"
-echo "██╗    ██╗███████╗██████╗      ██╗ █████╗  ██████╗██╗  ██╗";
-echo "██║    ██║██╔════╝██╔══██╗    ███║██╔══██╗██╔════╝██║ ██╔╝";
-echo "██║ █╗ ██║█████╗  ██║  ██║    ╚██║███████║██║     █████╔╝ ";
-echo "██║███╗██║██╔══╝  ██║  ██║     ██║██╔══██║██║     ██╔═██╗ ";
-echo "╚███╔███╔╝███████╗██████╔╝     ██║██║  ██║╚██████╗██║  ██╗";
-echo " ╚══╝╚══╝ ╚══════╝╚═════╝      ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝";
-sleep 3
 
+# Define a function to print the text with a typing effect
+print_with_typing_effect() {
+    text="$1"
+    for (( i=0; i<${#text}; i++ )); do
+        echo -n "${text:i:1}"
+        sleep 0.1
+    done
+    echo
+}
+
+# Define a function to create a delete effect
+delete_effect() {
+    text="$1"
+    for (( i=${#text}; i>0; i-- )); do
+        echo -n "${text:0:i}"
+        sleep 0.1
+        echo -ne "\r"
+        echo -n "          "
+        echo -ne "\r"
+    done
+}
+
+# Define the banner text
+banner_text="██╗    ██╗███████╗██████╗      ██╗ █████╗  ██████╗██╗  ██╗
+██║    ██║██╔════╝██╔══██╗    ███║██╔══██╗██╔════╝██║ ██╔╝
+██║ █╗ ██║█████╗  ██║  ██║    ╚██║███████║██║     █████╔╝ 
+██║███╗██║██╔══╝  ██║  ██║     ██║██╔══██║██║     ██╔═██╗ 
+╚███╔███╔╝███████╗██████╔╝     ██║██║  ██║╚██████╗██║  ██╗
+ ╚══╝╚══╝ ╚══════╝╚═════╝      ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝"
+
+# Print the banner with typing effect
+print_with_typing_effect "$banner_text"
+
+# Wait for a moment
+sleep 1
+
+# Delete the banner with delete effect
+delete_effect "$banner_text"
+
+# Wait before starting the installation
+sleep 1
+
+# Clear the screen again
 clear
 echo -e "\e[32mStarting Web Jack Bot Installer...\e[0m"
 sleep 2
@@ -22,7 +58,7 @@ sudo apt install -y python3 python3-pip python3-venv screen nano
 # Set up the bot directory and virtual environment
 echo "Setting up bot directory and virtual environment..."
 mkdir -p ~/telegram-bot
-cd ~/telegram-bot || { echo "Failed to navigate to bot directory"; exit 1; }
+cd ~/telegram-bot
 python3 -m venv venv
 source venv/bin/activate
 
@@ -57,8 +93,6 @@ except (FileNotFoundError, json.JSONDecodeError):
 
 client = TelegramClient('bot_session', api_id, api_hash)
 
-# Define Solana contract address pattern
-solana_contract_regex = r'[1-9A-HJ-NP-Za-km-z]{32,44}'
 # Define Ethereum contract address pattern
 ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'
 
@@ -67,14 +101,14 @@ ethereum_contract_regex = r'0x[a-fA-F0-9]{40}'
 async def handler(event):
     message = event.message.message
     sender_id = event.chat_id
-    contract_addresses = re.findall(solana_contract_regex, message) + re.findall(ethereum_contract_regex, message)
+    contract_addresses = re.findall(ethereum_contract_regex, message)
 
     if contract_addresses:
         new_addresses = []
         for address in contract_addresses:
             if address not in sent_addresses:
                 print(f"New contract address found: {address}, group ID: {sender_id}")
-                await client.send_message(maestro_bot_id, f'New contract address: {address}')
+                await client.send_message(maestro_bot_id, f'New Ethereum contract address: {address}')
                 print(f"Successfully sent to {maestro_bot_id}: {address}")
                 sent_addresses.append(address)
                 new_addresses.append(address)
@@ -104,12 +138,5 @@ EOF
 # Notify user to update config.json
 echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
 
-# Change to the bot directory explicitly
+# Navigate to the bot directory
 cd ~/telegram-bot
-if [[ $? -ne 0 ]]; then
-    echo "Failed to navigate to the bot directory."
-    exit 1
-fi
-
-echo "You are now in the bot directory. You can run the bot using the command:"
-echo "screen -dmS telegram_bot python3 bot.py"
