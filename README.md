@@ -1,5 +1,6 @@
 <h2><strong>Hello!</strong></h2>
 <p>This bot automatically forwards the contract addresses shared in telegram channels to <a href="https://t.me/maestro?start=r-jackyz">Maestro Bot</a>.</p>
+<p>Telegram Bot Maestro: https://t.me/maestro?start=r-jackyz   (I made all the settings accordingly, I recommend it.) </p>
 <p><strong><em>Features;</em></strong></p>
 <ul>
 <li>Prepared using Telethon + Python. Safe.</li>
