@@ -69,11 +69,25 @@ regex_patterns = {
 }
 
 # Handle new messages
-@client.on(events.NewMessage(chats=groups))
+@client.on(events.NewMessage(chats=list(groups.keys())))
 async def handler(event):
     message = event.message.message
     sender_id = event.chat_id
+    group_settings = groups.get(str(sender_id), {})
     found_addresses = set()  # Use a set to store unique addresses only
+
+    # Whitelist user filter
+    if 'whitelist_user_ids' in group_settings and group_settings['whitelist_user_ids']:
+        if event.sender_id not in group_settings['whitelist_user_ids']:
+            return
+
+    # Blacklist and Whitelist keyword filters
+    if 'blacklist_keywords' in group_settings:
+        if any(black in message for black in group_settings['blacklist_keywords']):
+            return
+    if 'whitelist_keywords' in group_settings and group_settings['whitelist_keywords']:
+        if not any(white in message for white in group_settings['whitelist_keywords']):
+            return
 
     for chain, pattern in regex_patterns.items():
         contract_addresses = re.findall(pattern, message)
@@ -106,11 +120,21 @@ cat << 'EOF' > config.json
 {
     "api_id": "YOUR_API_ID",
     "api_hash": "YOUR_API_HASH",
-    "groups": [123456789, 987654321],
+    "groups": {
+        "-100123456789": {
+            "whitelist_user_ids": [],
+            "blacklist_keywords": [],
+            "whitelist_keywords": []
+        },
+        "-100987654321": {
+            "blacklist_keywords": ["banword"],
+            "whitelist_keywords": []
+        }
+    },
     "maestro_bot_id": "@maestro"
 }
 EOF
 
 # Notify user to update config.json and open it in nano
-echo "Installation complete. Please update the 'config.json' file with your API details and group IDs."
+echo "Installation complete. Please update the 'config.json' file with your API details and group settings."
 nano config.json
