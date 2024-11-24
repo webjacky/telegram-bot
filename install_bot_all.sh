@@ -7,7 +7,7 @@ echo "██║    ██║██╔════╝██╔══██╗    
 echo "██║ █╗ ██║█████╗  ██║  ██║    ╚██║███████║██║     █████╔╝ ";
 echo "██║███╗██║██╔══╝  ██║  ██║     ██║██╔══██║██║     ██╔═██╗ ";
 echo "╚███╔███╔╝███████╗██████╔╝     ██║██║  ██║╚██████╗██║  ██╗";
-echo " ╚══╝╚══╝ ╚══════╝╚═════╝      ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝";
+echo " ╚══╝╚══╝ ╚══════╝╚═════╝      ╚═╝╚═╝  ╚═════╝╚═╝  ╚═╝";
 sleep 3
 
 clear
@@ -46,6 +46,7 @@ api_hash = config['api_hash']
 all_messages_groups = config['all_messages_groups']
 filtered_groups = config['filtered_groups']
 maestro_bot_id = config['maestro_bot_id']
+target_group_id = config.get('target_group_id')  # Hedef grup ID'si
 
 sent_addresses_file = 'sent_addresses.json'
 
@@ -88,7 +89,14 @@ async def process_message(message, chat_id):
         for address in matches:
             if address not in sent_addresses:
                 print(f"Yeni {chain} adresi bulundu: {address}, grup ID: {chat_id}")
+                
+                # Maestro Bot'a mesaj gönder
                 await client.send_message(maestro_bot_id, f"Yeni {chain} adresi: {address}")
+                
+                # Hedef gruba mesaj gönder
+                if target_group_id:
+                    await client.send_message(target_group_id, f"Yeni {chain} adresi: {address}")
+                
                 sent_addresses.append(address)
                 found_addresses.add(address)
 
@@ -115,7 +123,8 @@ cat << 'EOF' > config.json
             "whitelist_user_ids": [123456789, 987654321]
         }
     },
-    "maestro_bot_id": "@maestro"
+    "maestro_bot_id": "@maestro",
+    "target_group_id": -1001122334455  # Mesaj gönderilecek diğer grup ID'si
 }
 EOF
 
